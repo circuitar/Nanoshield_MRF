@@ -4,7 +4,7 @@ Nanoshield_MRF
 This is our new Arduino library to use the 2.4GHz [MRF24J40 wireless radio](http://www.microchip.com/wwwproducts/Devices.aspx?dDocName=en027752) from Microchip.
 It supports communication using the 802.15.4 wireless protocol at the MAC level, and enables use of the [MRF24J40MA/B/C/D/E wireless modules](http://www.microchip.com/pagehandler/en-us/technology/personalareanetworks/home.html) from Microchip.
 
-The reference board to use this library is from the [MRF24J40 Nanoshield](https://www.circuitar.com.br/en/nanoshields/modules/mrf24j40/) from Circuitar.
+The reference board to use this library is the [MRF24J40 Nanoshield](https://www.circuitar.com.br/en/nanoshields/modules/mrf24j40/) from Circuitar.
 
 The following features are provided:
 
