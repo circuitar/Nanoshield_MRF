@@ -16,7 +16,9 @@
 #define MRF_SADRH    0x04
 #define MRF_TXNCON   0x1B
 #define MRF_PACON2   0x18
+#define MRF_TXSTAT   0x24
 #define MRF_TXSTBL   0x2E
+#define MRF_INTSTAT  0x31
 #define MRF_GPIO     0x33
 #define MRF_TRISGPIO 0x34
 #define MRF_RFCTL    0x36
@@ -235,7 +237,7 @@ void Nanoshield_MRF::startPacket() {
   txCount = 0;
 }
 
-inline int Nanoshield_MRF::bytesLeftToWrite() {
+int Nanoshield_MRF::bytesLeftToWrite() {
   return MRF_MAX_PAYLOAD_SIZE - txCount;
 }
 
@@ -267,6 +269,14 @@ bool Nanoshield_MRF::sendPacket(uint16_t addr) {
   writeShort(MRF_TXNCON, 0b00000001);
   
   return true;
+}
+
+bool Nanoshield_MRF::transmissionDone() {
+  return readShort(MRF_INTSTAT) & 0x01;
+}
+
+bool Nanoshield_MRF::transmissionSuccess() {
+  return !(readShort(MRF_TXSTAT) & 0x01);
 }
 
 bool Nanoshield_MRF::receivePacket() {
@@ -344,7 +354,7 @@ void Nanoshield_MRF::writeLong(uint16_t addr, uint8_t data) {
 }
 
 bool Nanoshield_MRF::writeToBuffer(void* data, int size) {
-  if (txCount > bytesLeftToWrite()) {
+  if (size > bytesLeftToWrite()) {
     return false;
   }
 
