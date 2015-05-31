@@ -69,14 +69,10 @@ void Nanoshield_MRF::begin() {
   writeShort(MRF_BBREG2, 0x80);
   writeShort(MRF_CCAEDTH, 0x60);
   writeShort(MRF_BBREG6, 0x40);
-  writeShort(MRF_RFCTL, 0x04);
-  writeShort(MRF_RFCTL, 0x00);
   setPanId(panId);
   setCoordinator(false);
   setPaLna(paLna);
-  
-  // Let RF stabilize
-  delay(1);
+  setChannel(11);
 }
 
 void Nanoshield_MRF::setPanId(uint16_t panId) {
@@ -103,12 +99,17 @@ void Nanoshield_MRF::setCoordinator(bool coord) {
 }
 
 void Nanoshield_MRF::setChannel(int channel) {
-  if (channel >= 11 && channel <= 26) {
+  if (channel < 11 || channel > 26) {
     return;
   }
 
-  uint8_t reg = readLong(MRF_RFCON0);
-  writeLong(MRF_RFCON0, (reg & 0b00001111) | (channel - 11) << 4);
+  // Change channel
+  writeLong(MRF_RFCON0, (channel - 11) << 4 | 0x03);
+  
+  // Perform RF state machine reset and wait for RF circuitry to calibrate
+  writeShort(MRF_RFCTL, 0x04);
+  writeShort(MRF_RFCTL, 0x00);
+  delay(1);
 }
 
 bool Nanoshield_MRF::write(uint8_t b) {
