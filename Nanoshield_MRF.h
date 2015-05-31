@@ -75,6 +75,8 @@ class Nanoshield_MRF
     void setPaLna(bool paLna);
     void setCoordinator(bool coord);
     void setChannel(int channel);
+    int getSignalStrength();
+    int getLinkQuality();
 
     bool write(uint8_t b);
     uint8_t read();
@@ -110,6 +112,8 @@ class Nanoshield_MRF
     int rxCount;
     int rxSize;
     uint8_t rxBuf[MRF_MAX_RX_FIFO_SIZE];
+    uint8_t rssi;
+    uint8_t lqi;
  
     uint8_t readShort(uint8_t address);
     void writeShort(uint8_t address, uint8_t data);

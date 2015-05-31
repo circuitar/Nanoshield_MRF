@@ -46,6 +46,8 @@ Nanoshield_MRF::Nanoshield_MRF(Mrf24j40Type type, int cs) {
   this->txCount = 0;
   this->rxSize = 0;
   this->rxCount = 0;
+  this->rssi = 0;
+  this->lqi = 0;
 }
 
 void Nanoshield_MRF::begin() {
@@ -110,6 +112,14 @@ void Nanoshield_MRF::setChannel(int channel) {
   writeShort(MRF_RFCTL, 0x04);
   writeShort(MRF_RFCTL, 0x00);
   delay(1);
+}
+
+int Nanoshield_MRF::getSignalStrength() {
+  return rssi;
+}
+
+int Nanoshield_MRF::getLinkQuality() {
+  return lqi;
 }
 
 bool Nanoshield_MRF::write(uint8_t b) {
@@ -278,6 +288,10 @@ bool Nanoshield_MRF::receivePacket() {
       rxBuf[rxSize] = readLong(0x301 + MRF_MHR_SIZE + rxSize);
       rxSize++;
     }
+    
+    // Read RSSI and LQI
+    lqi = readLong(0x301 + frameSize);
+    rssi = readLong(0x301 + frameSize + 1);
   
     // Flush the reception buffer, re-enable interrupts and receiver
     writeShort(0x0D, 0x01);

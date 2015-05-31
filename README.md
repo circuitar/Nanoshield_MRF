@@ -22,7 +22,7 @@ The following examples are provided:
 - **SendInteger** + **ReceiveInteger**: transfer a packet over the air containing one integer number.
 - **SendString** + **ReceiveString** or **ReceiveStringIntoBuffer**: transfer a packet over the air containing one character string.
 - **SendPacket** + **ReceivePacket**: transfer an assembled packet over the air containing multiple types of data together.
-- **ReceiveBytes**: receives wireless packets, printing their content as a raw byte string. It can be used along with any of the **Send*** examples above.
+- **ReceiveBytes**: receives wireless packets, printing their content as a raw byte string. It also prints received signal strength and link quality indicators (RSSI and LQI). It can be used along with any of the **Send*** examples above.
 
 ---
 Copyright (c) 2015 Circuitar
