@@ -10,6 +10,7 @@
 #define NANOSHIELD_MRF_h
 
 #include <Arduino.h>
+#include <SPI.h>
 
 // Packet Transmission Details
 //
@@ -104,6 +105,8 @@ class Nanoshield_MRF
     int bytesLeftToRead();
 
   private:
+    static SPISettings spiSettings;
+  
     int cs;
     uint16_t panId;
     uint16_t srcAddr;
