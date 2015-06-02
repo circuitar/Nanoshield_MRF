@@ -98,7 +98,7 @@ class Nanoshield_MRF
     
     void startPacket();
     int bytesLeftToWrite();
-    bool sendPacket(uint16_t addr);
+    bool sendPacket(uint16_t addr, bool ack = false);
     bool transmissionDone();
     bool transmissionSuccess();
     bool receivePacket();
