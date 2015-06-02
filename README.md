@@ -14,6 +14,7 @@ The following features are provided:
 * Set/unset module as network coordinator
 * External PA/LNA control to use MRF24J40B/C/D/E modules from Microchip
 * Channel frequency selection
+* Automatic acknowledgement and packet retransmission
 
 To install, just copy it under &lt;Arduino sketch folder&gt;/libraries/
 

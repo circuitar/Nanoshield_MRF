@@ -17,6 +17,9 @@
 // Select module type (MRF24J40MA/B/C/D/E)
 #define MODULE_TYPE MRF24J40MB
 
+// Enable/disable acknowledgement and automatic retransmission
+#define ACK true
+
 // Select radio channel (11 to 26)
 #define CHANNEL 11
 
@@ -65,18 +68,19 @@ void loop() {
   // Count the number of packets received until the terminator packet or timeout
   while (MASTER ? (millis() - t0 < TIMEOUT) : true) {
     if (mrf.receivePacket()) {
-      if (mrf.read() == 1) {
+      if (mrf.read() == 0) {
+        mrf.readInt();                  // Packet number (ignore)
+        remoteLinkRate = mrf.readInt(); // Link rate
+        remoteRssi = mrf.readInt();     // RSSI
+        remoteLqi = mrf.readInt();      // LQI
+        rssiSum += mrf.getSignalStrength();
+        lqiSum += mrf.getLinkQuality();
+        count++;
+      } else {
         delay(5 * TERMINATORS); // Wait until all terminators are received
-        mrf.receivePacket();     // Clear reception buffer
+        mrf.receivePacket();    // Clear reception buffer
         break;
       }
-      mrf.readInt();                  // Packet number (ignore)
-      remoteLinkRate = mrf.readInt(); // Link rate
-      remoteRssi = mrf.readInt();     // RSSI
-      remoteLqi = mrf.readInt();      // LQI
-      rssiSum += mrf.getSignalStrength();
-      lqiSum += mrf.getLinkQuality();
-      count++;
     }
   }
   
@@ -106,7 +110,7 @@ void sendPackets(int rate, int rssi, int lqi) {
     mrf.writeInt(rate); // Link rate
     mrf.writeInt(rssi); // RSSI
     mrf.writeInt(lqi);  // LQI
-    mrf.sendPacket(destAddr);
+    mrf.sendPacket(destAddr, ACK);
     while (!mrf.transmissionDone());
   }
   
@@ -128,4 +132,3 @@ void printLinkInfo(char* name, int lr, int rssi, int lqi) {
   Serial.print(" LQI: ");
   Serial.println(lqi);
 }
-

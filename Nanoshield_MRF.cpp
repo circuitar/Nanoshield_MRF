@@ -13,6 +13,7 @@
 #define MRF_PANIDH   0x02
 #define MRF_SADRL    0x03
 #define MRF_SADRH    0x04
+#define MRF_RXFLUSH  0x0D
 #define MRF_TXNCON   0x1B
 #define MRF_PACON2   0x18
 #define MRF_TXSTAT   0x24
@@ -21,6 +22,7 @@
 #define MRF_GPIO     0x33
 #define MRF_TRISGPIO 0x34
 #define MRF_RFCTL    0x36
+#define MRF_BBREG1   0x39
 #define MRF_BBREG2   0x3A
 #define MRF_BBREG6   0x3E
 #define MRF_CCAEDTH  0x3F
@@ -241,23 +243,23 @@ int Nanoshield_MRF::bytesLeftToWrite() {
   return MRF_MAX_PAYLOAD_SIZE - txCount;
 }
 
-bool Nanoshield_MRF::sendPacket(uint16_t addr) {
+bool Nanoshield_MRF::sendPacket(uint16_t addr, bool ack) {
   if (txCount == 0) {
     return false;
   }
 
   // Send header size, frame size and header
   int i = 0;
-  writeLong(i++, MRF_MHR_SIZE);           // Header size
-  writeLong(i++, MRF_MHR_SIZE + txCount); // Frame size
-  writeLong(i++, 0b01000001);             // Frame control bits 0-7 (data frame, no security, no pending data, ack disabled, intra-PAN)
-  writeLong(i++, 0b10001000);             // Frame control bits 8-15 (16-bit addresses with PAN)
-  writeLong(i++, seqNumber++);            // Sequence number
-  writeLong(i++, panId);                  // PAN ID
+  writeLong(i++, MRF_MHR_SIZE);                  // Header size
+  writeLong(i++, MRF_MHR_SIZE + txCount);        // Frame size
+  writeLong(i++, ack ? 0b01100001 : 0b01000001); // Frame control bits 0-7 (data frame, no security, no pending data, ack disabled, intra-PAN)
+  writeLong(i++, 0b10001000);                    // Frame control bits 8-15 (16-bit addresses with PAN)
+  writeLong(i++, seqNumber++);                   // Sequence number
+  writeLong(i++, panId);                         // PAN ID
   writeLong(i++, panId >> 8);
-  writeLong(i++, addr);                   // Destination address
+  writeLong(i++, addr);                          // Destination address
   writeLong(i++, addr >> 8);
-  writeLong(i++, srcAddr);                // Source address
+  writeLong(i++, srcAddr);                       // Source address
   writeLong(i++, srcAddr >> 8);
 
   // Send data payload
@@ -266,7 +268,7 @@ bool Nanoshield_MRF::sendPacket(uint16_t addr) {
   }
 
   // Start transmission
-  writeShort(MRF_TXNCON, 0b00000001);
+  writeShort(MRF_TXNCON, ack ? 0b00000101 : 0b00000001);
   
   return true;
 }
@@ -283,9 +285,9 @@ bool Nanoshield_MRF::receivePacket() {
   int frameSize;
 
   // Check RXIF in INTSTAT
-  if (readShort(0x31) & 0x08) {
+  if (readShort(MRF_INTSTAT) & 0b00001000) {
     // Disable receiver
-    writeShort(0x39, 0x04);
+    writeShort(MRF_BBREG1, 0b00000100);
     
     // Packet received, get the number of bytes
     frameSize = readLong(0x300);
@@ -303,11 +305,11 @@ bool Nanoshield_MRF::receivePacket() {
     rssi = readLong(0x301 + frameSize + 1);
   
     // Flush the reception buffer, re-enable receiver
-    writeShort(0x0D, 0x01);
-    writeShort(0x39, 0x00);
+    writeShort(MRF_RXFLUSH, 0b00000001);
+    writeShort(MRF_BBREG1, 0);
     
     // Wait until RXIF is cleared (takes a while)
-    while(readShort(0x31) & 0x08);
+    while(readShort(MRF_INTSTAT) & 0b00001000);
     
     return true;
   }
