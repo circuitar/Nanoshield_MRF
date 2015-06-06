@@ -19,6 +19,7 @@
 #define MRF_TXSTAT   0x24
 #define MRF_TXSTBL   0x2E
 #define MRF_INTSTAT  0x31
+#define MRF_INTCON   0x32
 #define MRF_GPIO     0x33
 #define MRF_TRISGPIO 0x34
 #define MRF_RFCTL    0x36
@@ -75,6 +76,7 @@ void Nanoshield_MRF::begin() {
   writeShort(MRF_BBREG2, 0x80);
   writeShort(MRF_CCAEDTH, 0x60);
   writeShort(MRF_BBREG6, 0x40);
+  writeShort(MRF_INTCON, 0b11110111); // Enable RX FIFO reception interrupt
   setPanId(panId);
   setCoordinator(false);
   setPaLna(paLna);
