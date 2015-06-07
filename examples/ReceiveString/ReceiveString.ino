@@ -15,7 +15,8 @@ void setup() {
 
   // Initialize module
   mrf.begin();
-  mrf.setAddress(2); // Network address
+  mrf.setAddress(2);        // Network address
+  mrf.setCoordinator(true); // Module is coordinator
 }
 
 void loop() {

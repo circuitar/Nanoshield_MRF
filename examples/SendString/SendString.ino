@@ -12,8 +12,7 @@ Nanoshield_MRF mrf(MRF24J40MB);
 
 void setup() {
   mrf.begin();
-  mrf.setAddress(1);        // Network address
-  mrf.setCoordinator(true); // Module is coordinator
+  mrf.setAddress(1); // Network address
 }
 
 void loop() {

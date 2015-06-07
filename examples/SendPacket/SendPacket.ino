@@ -21,8 +21,7 @@ byte buf[3] = { 0x01, 0x02, 0x03 };
 
 void setup() {
   mrf.begin();
-  mrf.setAddress(1);        // Network address
-  mrf.setCoordinator(true); // Module is coordinator
+  mrf.setAddress(1); // Network address
 }
 
 void loop() {
