@@ -52,9 +52,9 @@ void loop() {
       Serial.print(buf);
     }
     Serial.println();
-    Serial.print("Signal strength (RSSI): ");
-    Serial.println(mrf.getSignalStrength());
-    Serial.print("Link Quality Indicator (LQI): ");
+    Serial.print("Received Signal Power: ");
+    Serial.print(mrf.getSignalStrength());
+    Serial.print(" dBm\r\n Link Quality Indicator (LQI): ");
     Serial.println(mrf.getLinkQuality());
     Serial.println();
 

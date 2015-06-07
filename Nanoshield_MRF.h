@@ -76,7 +76,8 @@ class Nanoshield_MRF
     void setPaLna(bool paLna);
     void setCoordinator(bool coord);
     void setChannel(int channel);
-    int getSignalStrength();
+    float measureSignalStrength();
+    float getSignalStrength();
     int getLinkQuality();
 
     bool write(uint8_t b);
