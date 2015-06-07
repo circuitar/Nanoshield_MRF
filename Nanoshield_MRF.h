@@ -79,6 +79,8 @@ class Nanoshield_MRF
     float measureSignalStrength();
     float getSignalStrength();
     int getLinkQuality();
+    void sleep();
+    void wakeup();
 
     bool write(uint8_t b);
     uint8_t read();
