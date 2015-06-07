@@ -1,7 +1,7 @@
 /**
  * Receive raw data via interrupt using the MRF24J40 module.
  *
- * The INT pin from MRF24J40 must be connected to the INT1 pin in the ATmega328 (Arduino D3 pin)
+ * The INT pin from MRF24J40 must be connected to the INT1 pin in the ATmega328 (Arduino D3 pin).
  *
  * Copyright (c) 2015 Circuitar
  * All rights reserved.
@@ -18,7 +18,7 @@ Nanoshield_MRF mrf(MRF24J40MB);
 byte buf[MRF_MAX_PAYLOAD_SIZE];
 
 // Number of bytes received
-volatile byte byteCount = 0;
+volatile int byteCount = 0;
 
 void setup() {
   Serial.begin(9600);
@@ -35,14 +35,16 @@ void setup() {
 }
 
 void loop() {
-  if (byteCount > 0) {
+  int bc = atomicGet(&byteCount);
+
+  if (bc > 0) {
     // Print data length
     Serial.print("Packet received: ");
-    Serial.print(byteCount);
+    Serial.print(bc);
     Serial.println(" bytes");
     
     // Print data in hexadecimal format
-    for (int i = 0; i < byteCount; i++) {
+    for (int i = 0; i < bc; i++) {
       char hex[4];
       sprintf(hex, "%02X ", buf[i]);
       Serial.print(hex);
@@ -50,8 +52,21 @@ void loop() {
     Serial.println();
     Serial.println();
     
-    byteCount = 0;
+    atomicSet(&byteCount, 0);
   }
+}
+
+int atomicGet(volatile int* ptr) {
+  noInterrupts();
+  int i = *ptr;
+  interrupts();
+  return i;
+}
+
+void atomicSet(volatile int* ptr, int val) {
+  noInterrupts();
+  *ptr = val;
+  interrupts();
 }
 
 void receive() {
