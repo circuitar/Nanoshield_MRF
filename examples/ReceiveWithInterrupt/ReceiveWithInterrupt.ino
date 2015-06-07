@@ -10,15 +10,13 @@
  */
 #include <SPI.h>
 #include <Nanoshield_MRF.h>
+#include <util/atomic.h>
 
 // Create wireless module object (MRF24J40MA/B/C/D/E)
 Nanoshield_MRF mrf(MRF24J40MB);
 
-// Buffer to hold received packet
-byte buf[MRF_MAX_PAYLOAD_SIZE];
-
-// Number of bytes received
-volatile int byteCount = 0;
+// Indicates a packet has been received
+volatile bool received = false;
 
 void setup() {
   Serial.begin(9600);
@@ -27,50 +25,46 @@ void setup() {
   mrf.begin();
   mrf.setAddress(2); // Network address
   
-  // Get packet from module when there is an interrupt on pin INT1 (D3 on Arduino)
-  attachInterrupt(1, receive, FALLING);
-  
   // Check reception for the first time
   receive();
+
+  // Get packet from module when there is an interrupt on pin INT1 (D3 on Arduino)
+  attachInterrupt(1, receive, FALLING);
 }
 
 void loop() {
-  int bc = atomicGet(&byteCount);
+  // Check if packet was received (variables shared with ISR must be read atomically)
+  bool ready;
+  ATOMIC_BLOCK(ATOMIC_FORCEON) {
+    ready = received;
+  }
 
-  if (bc > 0) {
+  if (ready) {
     // Print data length
     Serial.print("Packet received: ");
-    Serial.print(bc);
+    Serial.print(mrf.bytesLeftToRead());
     Serial.println(" bytes");
     
     // Print data in hexadecimal format
-    for (int i = 0; i < bc; i++) {
-      char hex[4];
-      sprintf(hex, "%02X ", buf[i]);
-      Serial.print(hex);
+    while (mrf.bytesLeftToRead()) {
+      char buf[4];
+      sprintf(buf, "%02X ", mrf.read());
+      Serial.print(buf);
     }
     Serial.println();
+    Serial.print("Signal strength (RSSI): ");
+    Serial.println(mrf.getSignalStrength());
+    Serial.print("Link Quality Indicator (LQI): ");
+    Serial.println(mrf.getLinkQuality());
     Serial.println();
-    
-    atomicSet(&byteCount, 0);
+
+    // Allow interrupt to continue receiving packets (write atomically)
+    ATOMIC_BLOCK(ATOMIC_FORCEON) {
+      received = false;
+    }
   }
-}
-
-int atomicGet(volatile int* ptr) {
-  noInterrupts();
-  int i = *ptr;
-  interrupts();
-  return i;
-}
-
-void atomicSet(volatile int* ptr, int val) {
-  noInterrupts();
-  *ptr = val;
-  interrupts();
 }
 
 void receive() {
-  if (byteCount == 0 && mrf.receivePacket()) {
-    byteCount = mrf.readBytes(buf, MRF_MAX_PAYLOAD_SIZE);
-  }
+  received = !received && mrf.receivePacket();
 }
