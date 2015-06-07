@@ -39,8 +39,8 @@ void loop() {
   for (int i = 0; i < 16; i++) {
     Serial.print(i + 11);
     Serial.print(": ");
-    Serial.print(channels[i]);
-    Serial.print(" ");
+    Serial.print(channels[i], 1);
+    Serial.print(" dBm ");
     for (int j = 0; j < 5 * (channels[i] + 90); j++) {
       Serial.print("=");
     }

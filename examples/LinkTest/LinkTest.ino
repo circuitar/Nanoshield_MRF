@@ -128,7 +128,7 @@ void printLinkInfo(char* name, int lr, float rssi, int lqi) {
   Serial.print(":\r\n Link rate: ");
   Serial.print(lr);
   Serial.print("%\r\n Received Power: ");
-  Serial.print(rssi);
+  Serial.print(rssi, 1);
   Serial.print(" dBm\r\n LQI: ");
   Serial.println(lqi);
 }
