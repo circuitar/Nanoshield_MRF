@@ -33,6 +33,7 @@
 #define MRF_RFCON6   0x206
 #define MRF_RFCON7   0x207
 #define MRF_RFCON8   0x208
+#define MRF_RSSI     0x210
 #define MRF_SLPCON1  0x220
 #define MRF_TESTMODE 0x22F
 
@@ -118,13 +119,24 @@ void Nanoshield_MRF::setChannel(int channel) {
   writeLong(MRF_RFCON0, (channel - 11) << 4 | 0x03);
   
   // Perform RF state machine reset and wait for RF circuitry to calibrate
-  writeShort(MRF_RFCTL, 0x04);
-  writeShort(MRF_RFCTL, 0x00);
+  writeShort(MRF_RFCTL, 0b00000100);
+  writeShort(MRF_RFCTL, 0);
   delay(1);
 }
 
-int Nanoshield_MRF::getSignalStrength() {
-  return rssi;
+float Nanoshield_MRF::measureSignalStrength() {
+  // Initiate RSSI calculation (RSSIMODE1 = 1)
+  writeShort(MRF_BBREG6, 0b11000000);
+  
+  // Wait until conversion is ready and read RSSI
+  while (!(readShort(MRF_BBREG6) & 0b00000001));
+  rssi = readLong(MRF_RSSI);
+
+  return getSignalStrength();
+}
+
+float Nanoshield_MRF::getSignalStrength() {
+  return rssi * 0.197948 - 87.646977;
 }
 
 int Nanoshield_MRF::getLinkQuality() {

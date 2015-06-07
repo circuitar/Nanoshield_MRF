@@ -18,7 +18,7 @@
 #define MODULE_TYPE MRF24J40MB
 
 // Enable/disable acknowledgement and automatic retransmission
-#define ACK true
+#define ACK false
 
 // Select radio channel (11 to 26)
 #define CHANNEL 11
@@ -56,13 +56,13 @@ void setup() {
 void loop() {
   int count = 0;
   unsigned long t0 = millis();
-  unsigned long rssiSum = 0;
+  float rssiSum = 0;
   unsigned long lqiSum = 0;
   int localLinkRate = 0;
-  int localRssi = 0;
+  float localRssi = 0;
   int localLqi = 0;
   int remoteLinkRate = 0;
-  int remoteRssi = 0;
+  float remoteRssi = 0;
   int remoteLqi = 0;
   
   // Count the number of packets received until the terminator packet or timeout
@@ -71,7 +71,7 @@ void loop() {
       if (mrf.read() == 0) {
         mrf.readInt();                  // Packet number (ignore)
         remoteLinkRate = mrf.readInt(); // Link rate
-        remoteRssi = mrf.readInt();     // RSSI
+        remoteRssi = mrf.readFloat();   // RSSI
         remoteLqi = mrf.readInt();      // LQI
         rssiSum += mrf.getSignalStrength();
         lqiSum += mrf.getLinkQuality();
@@ -101,15 +101,15 @@ void loop() {
   while (mrf.receivePacket());
 }
 
-void sendPackets(int rate, int rssi, int lqi) {
+void sendPackets(int rate, float rssi, int lqi) {
   // Send packet burst
   for (int i = 0; i < BURST_LENGTH; i++) {
     mrf.startPacket();
     mrf.write(0);
-    mrf.writeInt(i);    // Packet number
-    mrf.writeInt(rate); // Link rate
-    mrf.writeInt(rssi); // RSSI
-    mrf.writeInt(lqi);  // LQI
+    mrf.writeInt(i);      // Packet number
+    mrf.writeInt(rate);   // Link rate
+    mrf.writeFloat(rssi); // RSSI
+    mrf.writeInt(lqi);    // LQI
     mrf.sendPacket(destAddr, ACK);
     while (!mrf.transmissionDone());
   }
@@ -123,12 +123,12 @@ void sendPackets(int rate, int rssi, int lqi) {
   }
 }
 
-void printLinkInfo(char* name, int lr, int rssi, int lqi) {
+void printLinkInfo(char* name, int lr, float rssi, int lqi) {
   Serial.print(name);
   Serial.print(":\r\n Link rate: ");
   Serial.print(lr);
-  Serial.print("%\r\n RSSI: ");
-  Serial.println(rssi);
-  Serial.print(" LQI: ");
+  Serial.print("%\r\n Received Power: ");
+  Serial.print(rssi);
+  Serial.print(" dBm\r\n LQI: ");
   Serial.println(lqi);
 }
