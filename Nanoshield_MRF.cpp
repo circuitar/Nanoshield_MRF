@@ -66,7 +66,7 @@ void Nanoshield_MRF::begin() {
   writeShort(MRF_PACON2, 0b10011000);   // Setup recommended PA/LNA control timing (TXONTS = 0x6)
   writeShort(MRF_TXSTBL, 0b10010101);   // Setup recommended PA/LNA control timing (RFSTBL = 0x9)
   writeLong(MRF_RFCON0, 0b00000011);    // Set recommended value for RF Optimize Control (RFOPT = 0x3)
-  writeLong(MRF_RFCON1, 0b00000001);    // Set recommended value for VCO Optimize Control (VCOOPT = 0x2)
+  writeLong(MRF_RFCON1, 0b00000010);    // Set recommended value for VCO Optimize Control (VCOOPT = 0x2)
   writeLong(MRF_RFCON2, 0b10000000);    // Enable PLL (PLLEN = 1)
   writeLong(MRF_RFCON6, 0b10010000);    // Set recommended value for TX Filter Control and 20MHz Clock Recovery Control
                                         //  (TXFIL = 1, 20MRECVR = 1)
@@ -76,7 +76,7 @@ void Nanoshield_MRF::begin() {
                                         //  100kHz internal oscillator (/CLOUKTEN = 1, SLPCLKDIV = 0x01)
   writeShort(MRF_TRISGPIO, 0b00001000); // Make GPIO3 an output to control the PA voltage regulator (TRISGP3 = 1)
   writeShort(MRF_GPIO, 0b00001000);     // Set GPIO3 high to turn on the PA voltage regulator (GPIO3 = 1)
-  writeShort(MRF_BBREG2, 0b10000000);   // Use CCA Mode 1 - Energy above threshold - and set CCA Carrier Sense
+  writeShort(MRF_BBREG2, 0b10111000);   // Use CCA Mode 1 - Energy above threshold - and set CCA Carrier Sense
                                         //  Threshold to recommended value (CCAMODE = 0x2, CCACSTH = 0xE)
   writeShort(MRF_CCAEDTH, 0b01100000);  // Set energy detection threshold to recommended value (CCAEDTH = 0x60)
   writeShort(MRF_BBREG6, 0b01000000);   // Calculate RSSI for each packet received (RSSIMODE2 = 1)
