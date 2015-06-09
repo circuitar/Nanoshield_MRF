@@ -11,10 +11,10 @@
 #include <util/atomic.h>
 
 // Sleep time, in seconds
-#define SLEEP_TIME 1
+#define SLEEP_TIME 3
 
 // Create wireless module object (MRF24J40MA/B/C/D/E)
-Nanoshield_MRF mrf/*(MRF24J40MA)*/; // Make sure to select the right module
+Nanoshield_MRF mrf(MRF24J40MD);
 
 // Number of times the watchdog timer expired
 volatile int wdtCount = 0;
@@ -23,14 +23,11 @@ volatile int wdtCount = 0;
 int packets = 0;
 
 void setup() {
-  Serial.begin(9600);
-  Serial.println("Reset");
-  
   mrf.begin();
   mrf.setAddress(1); // Network address
 
   // Use "Power Down" sleep mode for ATmega328
-  //set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+  set_sleep_mode(SLEEP_MODE_PWR_DOWN);
   
   // Initialize watchdog timer to expire in 1 second
   watchdogSetup(WDTO_1S);
@@ -41,14 +38,16 @@ void loop() {
   
   // Get wdtCount value atomically - this is the number of times the watchdog timer expired, which
   //  is equal to the number of seconds that have passed since the processor was put to sleep.
+
   ATOMIC_BLOCK(ATOMIC_FORCEON) {
     seconds = wdtCount;
   }
-  
+
   if (seconds >= SLEEP_TIME) {
-    Serial.println(packets);
     // Wake radio module up
-    mrf.wakeup();
+    if (packets) {
+      mrf.wakeup();
+    }
     
     // Write packet containing an integer and send it to the module with address 2
     mrf.startPacket();
@@ -56,8 +55,7 @@ void loop() {
     mrf.sendPacket(2);
     
     // Wait until last packet is sent before going to sleep
-    delay(100);
-    Serial.println(mrf.transmissionSuccess() ? "OK" : "Failed");
+    while (!mrf.transmissionDone());
     mrf.sleep();
 
     // Reset the WDT interrupt counter atomically
@@ -67,8 +65,7 @@ void loop() {
   }
 
   // Put the processor to sleep
-  Serial.flush();
-  //sleep();
+  sleep();
 }
 
 // Initializes the watchdog timer in Interrupt Mode with timeouts according to avr/wdt.h (WDT0_xxx)
@@ -77,10 +74,10 @@ void watchdogSetup(int timeout) {
   wdt_enable(timeout);
   
   // Change from System Reset Mode to Interrupt Mode
-  volatile uint8_t wdtcsr = (WDTCSR | (1<<WDCE)) & ~(1<<WDE);
-  WDTCSR |= (1<<WDCE) | (1<<WDE);
+  volatile uint8_t wdtcsr = (WDTCSR | (1 << WDCE)) & ~(1 << WDE);
+  WDTCSR |= (1 << WDCE) | (1 << WDE);
   WDTCSR = wdtcsr;
-  WDTCSR |= (1<<WDIE);
+  WDTCSR |= (1 << WDIE);
 }
 
 // Watchdog interrupt handling
@@ -95,3 +92,4 @@ void sleep() {
   sleep_cpu();
   sleep_disable();
 }
+
