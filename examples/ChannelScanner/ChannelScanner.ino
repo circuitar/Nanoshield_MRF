@@ -12,8 +12,8 @@
 // Number of samples per channel
 #define SAMPLES 500
 
-// Create wireless module object
-Nanoshield_MRF mrf(MRF24J40MB);
+// Create wireless module object (MRF24J40MA/B/C/D/E)
+Nanoshield_MRF mrf/*(MRF24J40MA)*/; // Make sure to select the right module
 
 void setup() {
   Serial.begin(9600);
@@ -39,8 +39,8 @@ void loop() {
   for (int i = 0; i < 16; i++) {
     Serial.print(i + 11);
     Serial.print(": ");
-    Serial.print(channels[i]);
-    Serial.print(" ");
+    Serial.print(channels[i], 1);
+    Serial.print(" dBm ");
     for (int j = 0; j < 5 * (channels[i] + 90); j++) {
       Serial.print("=");
     }

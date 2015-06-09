@@ -73,12 +73,13 @@ class Nanoshield_MRF
     void begin(void);
     void setPanId(uint16_t panId);
     void setAddress(uint16_t addr);
-    void setPaLna(bool paLna);
     void setCoordinator(bool coord);
     void setChannel(int channel);
     float measureSignalStrength();
     float getSignalStrength();
     int getLinkQuality();
+    void sleep();
+    void wakeup();
 
     bool write(uint8_t b);
     uint8_t read();
@@ -109,9 +110,9 @@ class Nanoshield_MRF
     static SPISettings spiSettings;
   
     int cs;
+    Mrf24j40Type type;
     uint16_t panId;
     uint16_t srcAddr;
-    bool paLna;
     uint8_t seqNumber;
     int txCount;
     uint8_t txBuf[MRF_MAX_PAYLOAD_SIZE];
@@ -121,6 +122,9 @@ class Nanoshield_MRF
     uint8_t rssi;
     uint8_t lqi;
  
+    void reset();
+    void init();
+    void enablePaLna();
     uint8_t readShort(uint8_t address);
     void writeShort(uint8_t address, uint8_t data);
     uint8_t readLong(uint16_t address);

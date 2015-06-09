@@ -15,6 +15,7 @@ The following features are provided:
 * External PA/LNA control to use MRF24J40B/C/D/E modules from Microchip
 * Channel frequency selection
 * Automatic acknowledgement and packet retransmission
+* Measurement of received power
 
 To install, just copy it under &lt;Arduino sketch folder&gt;/libraries/
 
@@ -25,6 +26,7 @@ The following examples are provided:
 - **SendPacket** + **ReceivePacket**: transfer an assembled packet over the air containing multiple types of data together.
 - **ReceiveBytes**: receives wireless packets, printing their content as a raw byte string. It also prints received signal strength and link quality indicators (RSSI and LQI). It can be used along with any of the **Send*** examples above.
 - **ReceiveWithInterrupt**: similar to ReceiveBytes, but reception is done using an interrupt signal.
+- **ChannelScanner**: scans all channels (11 to 26) and plots the average received power on each one. It is useful to assess the clearest channel to use.
 
 ---
 Copyright (c) 2015 Circuitar

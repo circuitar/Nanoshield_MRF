@@ -8,7 +8,7 @@
 #include <Nanoshield_MRF.h>
 
 // Create wireless module object (MRF24J40MA/B/C/D/E)
-Nanoshield_MRF mrf(MRF24J40MB);
+Nanoshield_MRF mrf/*(MRF24J40MA)*/; // Make sure to select the right module
 
 byte b = 1;
 int i = -2015;
@@ -21,8 +21,7 @@ byte buf[3] = { 0x01, 0x02, 0x03 };
 
 void setup() {
   mrf.begin();
-  mrf.setAddress(1);        // Network address
-  mrf.setCoordinator(true); // Module is coordinator
+  mrf.setAddress(1); // Network address
 }
 
 void loop() {

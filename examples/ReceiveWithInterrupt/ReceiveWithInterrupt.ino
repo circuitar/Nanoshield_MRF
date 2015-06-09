@@ -13,7 +13,7 @@
 #include <util/atomic.h>
 
 // Create wireless module object (MRF24J40MA/B/C/D/E)
-Nanoshield_MRF mrf(MRF24J40MB);
+Nanoshield_MRF mrf/*(MRF24J40MA)*/; // Make sure to select the right module
 
 // Indicates a packet has been received
 volatile bool received = false;
@@ -23,7 +23,8 @@ void setup() {
 
   // Initialize module
   mrf.begin();
-  mrf.setAddress(2); // Network address
+  mrf.setAddress(2);        // Network address
+  mrf.setCoordinator(true); // Module is coordinator
   
   // Check reception for the first time
   receive();
@@ -53,8 +54,8 @@ void loop() {
     }
     Serial.println();
     Serial.print("Received Signal Power: ");
-    Serial.print(mrf.getSignalStrength());
-    Serial.print(" dBm\r\n Link Quality Indicator (LQI): ");
+    Serial.print(mrf.getSignalStrength(), 1);
+    Serial.print(" dBm\r\nLink Quality Indicator (LQI): ");
     Serial.println(mrf.getLinkQuality());
     Serial.println();
 

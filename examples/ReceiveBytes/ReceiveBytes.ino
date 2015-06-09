@@ -10,14 +10,15 @@
 #include <Nanoshield_MRF.h>
 
 // Create wireless module object (MRF24J40MA/B/C/D/E)
-Nanoshield_MRF mrf(MRF24J40MB);
+Nanoshield_MRF mrf/*(MRF24J40MA)*/; // Make sure to select the right module
 
 void setup() {
   Serial.begin(9600);
 
   // Initialize module
   mrf.begin();
-  mrf.setAddress(2); // Network address
+  mrf.setAddress(2);        // Network address
+  mrf.setCoordinator(true); // Module is coordinator
 }
 
 void loop() {
@@ -35,8 +36,8 @@ void loop() {
     }
     Serial.println();
     Serial.print("Received Signal Power: ");
-    Serial.print(mrf.getSignalStrength());
-    Serial.print(" dBm\r\n Link Quality Indicator (LQI): ");
+    Serial.print(mrf.getSignalStrength(), 1);
+    Serial.print(" dBm\r\nLink Quality Indicator (LQI): ");
     Serial.println(mrf.getLinkQuality());
     Serial.println();
   }

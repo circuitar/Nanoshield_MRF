@@ -15,7 +15,7 @@
 #define MASTER true
 
 // Select module type (MRF24J40MA/B/C/D/E)
-#define MODULE_TYPE MRF24J40MB
+#define /*MODULE_TYPE MRF24J40MB*/ // Make sure to select the right module
 
 // Enable/disable acknowledgement and automatic retransmission
 #define ACK false
@@ -128,7 +128,7 @@ void printLinkInfo(char* name, int lr, float rssi, int lqi) {
   Serial.print(":\r\n Link rate: ");
   Serial.print(lr);
   Serial.print("%\r\n Received Power: ");
-  Serial.print(rssi);
+  Serial.print(rssi, 1);
   Serial.print(" dBm\r\n LQI: ");
   Serial.println(lqi);
 }

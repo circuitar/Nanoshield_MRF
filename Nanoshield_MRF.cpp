@@ -16,12 +16,15 @@
 #define MRF_RXFLUSH  0x0D
 #define MRF_TXNCON   0x1B
 #define MRF_PACON2   0x18
+#define MRF_WAKECON  0x22
 #define MRF_TXSTAT   0x24
+#define MRF_SOFTRST  0x2A
 #define MRF_TXSTBL   0x2E
 #define MRF_INTSTAT  0x31
 #define MRF_INTCON   0x32
 #define MRF_GPIO     0x33
 #define MRF_TRISGPIO 0x34
+#define MRF_SLPACK   0x35
 #define MRF_RFCTL    0x36
 #define MRF_BBREG1   0x39
 #define MRF_BBREG2   0x3A
@@ -33,20 +36,17 @@
 #define MRF_RFCON6   0x206
 #define MRF_RFCON7   0x207
 #define MRF_RFCON8   0x208
+#define MRF_RFSTATE  0x20F
 #define MRF_RSSI     0x210
+#define MRF_SLPCON0  0x211
 #define MRF_SLPCON1  0x220
 #define MRF_TESTMODE 0x22F
 
 SPISettings Nanoshield_MRF::spiSettings = SPISettings(8000000, MSBFIRST, SPI_MODE0);
 
 Nanoshield_MRF::Nanoshield_MRF(Mrf24j40Type type, int cs) {
-  if (type == MRF24J40MA) {
-    this->paLna = false;
-  } else {
-    this->paLna = true;
-  }
-
   this->cs = cs;
+  this->type = type;
   this->panId = 0;
   this->srcAddr = 1;
   this->seqNumber = 0;
@@ -61,30 +61,7 @@ void Nanoshield_MRF::begin() {
   pinMode(cs, OUTPUT);
   digitalWrite(cs, HIGH);
   SPI.begin();
-
-  // MRF24J40 module configuration
-  writeShort(MRF_PACON2, 0b10011000);   // Setup recommended PA/LNA control timing (TXONTS = 0x6)
-  writeShort(MRF_TXSTBL, 0b10010101);   // Setup recommended PA/LNA control timing (RFSTBL = 0x9)
-  writeLong(MRF_RFCON0, 0b00000011);    // Set recommended value for RF Optimize Control (RFOPT = 0x3)
-  writeLong(MRF_RFCON1, 0b00000001);    // Set recommended value for VCO Optimize Control (VCOOPT = 0x2)
-  writeLong(MRF_RFCON2, 0b10000000);    // Enable PLL (PLLEN = 1)
-  writeLong(MRF_RFCON6, 0b10010000);    // Set recommended value for TX Filter Control and 20MHz Clock Recovery Control
-                                        //  (TXFIL = 1, 20MRECVR = 1)
-  writeLong(MRF_RFCON7, 0b10000000);    // Use 100kHz internal oscillator for Sleep Clock (SLPCLKSEL = 0x2)
-  writeLong(MRF_RFCON8, 0b00010000);    // Set recommended value for VCO Control (RFVCO = 1)
-  writeLong(MRF_SLPCON1, 0b00100001);   // Disable CLKOUT pin and set Sleep Clock Divisor to minimum of 0x01 for the
-                                        //  100kHz internal oscillator (/CLOUKTEN = 1, SLPCLKDIV = 0x01)
-  writeShort(MRF_TRISGPIO, 0b00001000); // Make GPIO3 an output to control the PA voltage regulator (TRISGP3 = 1)
-  writeShort(MRF_GPIO, 0b00001000);     // Set GPIO3 high to turn on the PA voltage regulator (GPIO3 = 1)
-  writeShort(MRF_BBREG2, 0b10000000);   // Use CCA Mode 1 - Energy above threshold - and set CCA Carrier Sense
-                                        //  Threshold to recommended value (CCAMODE = 0x2, CCACSTH = 0xE)
-  writeShort(MRF_CCAEDTH, 0b01100000);  // Set energy detection threshold to recommended value (CCAEDTH = 0x60)
-  writeShort(MRF_BBREG6, 0b01000000);   // Calculate RSSI for each packet received (RSSIMODE2 = 1)
-  writeShort(MRF_INTCON, 0b11110111);   // Enable RX FIFO reception interrupt
-  setPanId(panId);
-  setCoordinator(false);
-  setPaLna(paLna);
-  setChannel(11);                       // Set default channel (must keep 11) and reset state machine
+  init();
 }
 
 void Nanoshield_MRF::setPanId(uint16_t panId) {
@@ -97,12 +74,6 @@ void Nanoshield_MRF::setAddress(uint16_t addr) {
   this->srcAddr = addr;
   writeShort(MRF_SADRH, addr >> 8);
   writeShort(MRF_SADRL, addr);
-}
-
-void Nanoshield_MRF::setPaLna(bool paLna) {
-  this->paLna = paLna;
-  uint8_t reg = readLong(MRF_TESTMODE);
-  writeLong(MRF_TESTMODE, paLna ? reg | 0b00000111 : reg & ~0b00000111);
 }
 
 void Nanoshield_MRF::setCoordinator(bool coord) {
@@ -121,16 +92,26 @@ void Nanoshield_MRF::setChannel(int channel) {
   // Perform RF state machine reset and wait for RF circuitry to calibrate
   writeShort(MRF_RFCTL, 0b00000100);
   writeShort(MRF_RFCTL, 0);
-  delay(1);
+  delayMicroseconds(200);
 }
 
 float Nanoshield_MRF::measureSignalStrength() {
+  // Disable PA
+  if (type != MRF24J40MA) {
+    writeLong(MRF_TESTMODE, 0b00001000);  // Configure RF state machine for normal operation
+    writeShort(MRF_TRISGPIO, 0b00000110); // Configure GPIO1 and GPIO2 for output
+    writeShort(MRF_GPIO, 0b00000100);     // Set GPIO1 0 to disable PA and GPIO2 to 1 to enable LNA
+  }
+
   // Initiate RSSI calculation (RSSIMODE1 = 1)
   writeShort(MRF_BBREG6, 0b11000000);
   
   // Wait until conversion is ready and read RSSI
   while (!(readShort(MRF_BBREG6) & 0b00000001));
   rssi = readLong(MRF_RSSI);
+
+  // Re-enable PA
+  enablePaLna();
 
   return getSignalStrength();
 }
@@ -141,6 +122,40 @@ float Nanoshield_MRF::getSignalStrength() {
 
 int Nanoshield_MRF::getLinkQuality() {
   return lqi;
+}
+
+void Nanoshield_MRF::sleep() {
+  // Disable PA and LNA
+  switch (type) {
+    case MRF24J40MB:
+      // GPIO1 and GPIO2 are connected
+      writeLong(MRF_TESTMODE, 0b00001000);  // Configure RF state machine for normal operation
+      writeShort(MRF_TRISGPIO, 0b00000110); // Configure GPIO1 and GPIO2 for output
+      writeShort(MRF_GPIO, 0);              // Set GPIO1 and GPIO2 to 0 to disable PA and LNA
+      break;
+    case MRF24J40MC:
+      // GPIO1, GPIO2 and GPIO3 are connected - GPIO3 enables (high) or disables (low) the PA voltage regulator
+      writeLong(MRF_TESTMODE, 0b00001000);  // Configure RF state machine for normal operation
+      writeShort(MRF_TRISGPIO, 0b00001110); // Configure GPIO1, GPIO2 and GPIO3 for output
+      writeShort(MRF_GPIO, 0);              // Set GPIO1, GPIO2 and GPIO3 to 0 to disable PA, LNA and PA regulator
+      break;
+    case MRF24J40MD:
+    case MRF24J40ME:
+      // GPIO0, GPIO1 and GPIO2 are connected
+      writeLong(MRF_TESTMODE, 0b00001000);  // Configure RF state machine for normal operation
+      writeShort(MRF_TRISGPIO, 0b00000111); // Configure GPIO0, GPIO1 and GPIO2 for output
+      writeShort(MRF_GPIO, 0);              // Set GPIO1 and GPIO2 to 0 to disable PA and LNA
+      break;
+  }
+
+  writeShort(MRF_SOFTRST, 0b00000100); // Perform Power Management Reset (RSTPWR = 1)
+  writeShort(MRF_WAKECON, 0b10000000); // Enable Immediate Wake-up Mode (IMMWAKE = 1)
+  writeShort(MRF_SLPACK, 0b10000000);  // Put the module to sleep (SLPACK = 1)
+}
+
+void Nanoshield_MRF::wakeup() {
+  reset(); // Perform software reset
+  init();  // Reinitialize all registers
 }
 
 bool Nanoshield_MRF::write(uint8_t b) {
@@ -284,18 +299,18 @@ bool Nanoshield_MRF::sendPacket(uint16_t addr, bool ack) {
     writeLong(i++, txBuf[j]);
   }
 
-  // Start transmission
+  // Start transmission (0x37 0x01)
   writeShort(MRF_TXNCON, ack ? 0b00000101 : 0b00000001);
   
   return true;
 }
 
 bool Nanoshield_MRF::transmissionDone() {
-  return readShort(MRF_INTSTAT) & 0x01;
+  return readShort(MRF_INTSTAT) & 0b00000001;
 }
 
 bool Nanoshield_MRF::transmissionSuccess() {
-  return !(readShort(MRF_TXSTAT) & 0x01);
+  return !(readShort(MRF_TXSTAT) & 0b00000001);
 }
 
 bool Nanoshield_MRF::receivePacket() {
@@ -336,6 +351,44 @@ bool Nanoshield_MRF::receivePacket() {
 
 int Nanoshield_MRF::bytesLeftToRead() {
   return rxSize - rxCount;
+}
+
+void Nanoshield_MRF::reset() {
+  writeShort(MRF_SOFTRST, 0b00000111); // Perform full software reset (RSTPWR = 1, RSTBB = 1, RSTMAC = 1)
+}
+
+void Nanoshield_MRF::init() {
+  // MRF24J40 module configuration
+  writeShort(MRF_PACON2, 0b10011000);    // Setup recommended PA/LNA control timing (TXONTS = 0x6)
+  writeShort(MRF_TXSTBL, 0b10010101);    // Setup recommended PA/LNA control timing (RFSTBL = 0x9)
+  writeLong(MRF_RFCON0, 0b00000011);     // Set recommended value for RF Optimize Control (RFOPT = 0x3)
+  writeLong(MRF_RFCON1, 0b00000010);     // Set recommended value for VCO Optimize Control (VCOOPT = 0x2)
+  writeLong(MRF_RFCON2, 0b10000000);     // Enable PLL (PLLEN = 1)
+  writeLong(MRF_RFCON6, 0b10010000);     // Set recommended value for TX Filter Control and 20MHz Clock Recovery Control
+                                         //  (TXFIL = 1, 20MRECVR = 1)
+  writeLong(MRF_RFCON7, 0b10000000);     // Use 100kHz internal oscillator for Sleep Clock (SLPCLKSEL = 0x2)
+  writeLong(MRF_RFCON8, 0b00010000);     // Set recommended value for VCO Control (RFVCO = 1)
+  writeLong(MRF_SLPCON0, 0b00000001);    // Disable the sleep clock to save power (/SLPCLKEN = 1)
+  writeLong(MRF_SLPCON1, 0b00100001);    // Disable CLKOUT pin and set Sleep Clock Divisor to minimum of 0x01 for the
+                                         //  100kHz internal oscillator (/CLOUKTEN = 1, SLPCLKDIV = 0x01)
+  writeShort(MRF_BBREG2, 0b10111000);    // Use CCA Mode 1 - Energy above threshold - and set CCA Carrier Sense
+                                         //  Threshold to recommended value (CCAMODE = 0x2, CCACSTH = 0xE)
+  writeShort(MRF_CCAEDTH, 0b01100000);   // Set energy detection threshold to recommended value (CCAEDTH = 0x60)
+  writeShort(MRF_BBREG6, 0b01000000);    // Calculate RSSI for each packet received (RSSIMODE2 = 1)
+  writeShort(MRF_INTCON, 0b11110111);    // Enable RX FIFO reception interrupt (RXIE = 0)
+  enablePaLna();                         // Enable PA and LNA control
+  
+  setPanId(panId);
+  setChannel(11);                        // Set default channel (must keep 11) and reset state machine
+  delay(2);                              // Let RF stabilize
+}
+
+void Nanoshield_MRF::enablePaLna() {
+  if (type != MRF24J40MA) {
+    writeShort(MRF_TRISGPIO, 0);          // Configure all GPIO pins as input
+    writeShort(MRF_GPIO, 0);
+    writeLong(MRF_TESTMODE, 0b00001111);  // Configure RF state machine for automatic PA/LNA control
+  }
 }
 
 uint8_t Nanoshield_MRF::readShort(uint8_t addr) {
