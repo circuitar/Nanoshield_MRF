@@ -380,6 +380,7 @@ void Nanoshield_MRF::init() {
   
   setPanId(panId);
   setChannel(11);                        // Set default channel (must keep 11) and reset state machine
+  delay(2);                              // Let RF stabilize
 }
 
 void Nanoshield_MRF::enablePaLna() {

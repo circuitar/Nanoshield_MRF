@@ -11,18 +11,22 @@
 #include <util/atomic.h>
 
 // Sleep time, in seconds
-#define SLEEP_TIME 3
+#define SLEEP_TIME 5
 
 // Create wireless module object (MRF24J40MA/B/C/D/E)
-Nanoshield_MRF mrf(MRF24J40MD);
+Nanoshield_MRF mrf/*(MRF24J40MA)*/; // Make sure to select the right module
 
 // Number of times the watchdog timer expired
-volatile int wdtCount = 0;
+volatile int wdtCount = SLEEP_TIME;
 
 // Packet counter
 int packets = 0;
 
 void setup() {
+  // Turn LED off to save power
+  pinMode(10, OUTPUT);
+  digitalWrite(10, LOW);
+  
   mrf.begin();
   mrf.setAddress(1); // Network address
 
@@ -88,8 +92,12 @@ ISR(WDT_vect) {
 
 // Put ATmega to sleep
 void sleep() {
+  uint8_t oldADCSRA = ADCSRA;       // Save ADC state
   sleep_enable();
-  sleep_cpu();
-  sleep_disable();
+  ADCSRA = 0;                       // Disable ADC to save power
+  MCUCR = bit (BODS) | bit (BODSE); // Disable brown-out detect to save power
+  MCUCR = bit (BODS);
+  sleep_cpu();                      // Enter sleep mode
+  sleep_disable();                  // Continue execution here after watchdog expires
+  ADCSRA = oldADCSRA;               // Restore ADC state
 }
-
