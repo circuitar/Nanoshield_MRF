@@ -15,7 +15,7 @@
 #define MASTER true
 
 // Select module type (MRF24J40MA/B/C/D/E)
-#define MODULE_TYPE MRF24J40MB
+#define /*MODULE_TYPE MRF24J40MB*/ // Make sure to select the right module
 
 // Enable/disable acknowledgement and automatic retransmission
 #define ACK false
