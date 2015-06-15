@@ -24,7 +24,7 @@ To install, just copy it under ``<Arduino sketch folder>/libraries/``
 
 The following examples are provided:
 
-- SendInteger_ + ReceiveInteger_: transfer a packet over the air containing one integer number.
+ SendInteger_ + ReceiveInteger_: transfer a packet over the air containing one integer number.
 - SendString_ + ReceiveString_ or ReceiveStringIntoBuffer_: transfer a packet over the air
   containing one character string.
 - SendPacket_ + ReceivePacket_: transfer an assembled packet over the air containing multiple types
@@ -54,6 +54,7 @@ The following examples are provided:
 .. _SleepWakeup: https://github.com/circuitar/Nanoshield_MRF/blob/master/examples/SleepWakeup/SleepWakeup.ino
 
 ----
+
 Copyright (c) 2015 Circuitar
 All rights reserved.
 
