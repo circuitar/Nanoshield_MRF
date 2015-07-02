@@ -31,7 +31,7 @@ The following examples are provided:
   of data together.
 - ReceiveBytes_: receives wireless packets, printing their content as a raw byte string. It also
   prints received signal strength and link quality indicators (RSSI and LQI). It can be used along
-  with any of the `Send`* examples above.
+  with any of the ``Send*`` examples above.
 - ReceiveWithInterrupt_: similar to ReceiveBytes, but reception is done using an interrupt signal.
 - ChannelScanner_: scans all channels (11 to 26) and plots the average received power on each one.
   It is useful to assess the clearest channel to use.
