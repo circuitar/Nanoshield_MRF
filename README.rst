@@ -38,7 +38,7 @@ The following examples are provided:
 - SleepWakeup_: how to put the module to sleep and wake it up.
 
 .. _`MRF24J40 wireless radio`: http://www.microchip.com/wwwproducts/Devices.aspx?dDocName=en027752
-.. _`MRF24J40 Nanoshield`: https://www.circuitar.com.br/en/nanoshields/modules/mrf24j40/
+.. _`MRF24J40 Nanoshield`: https://www.circuitar.com.br/nanoshields/modulos/mrf24j40/
 .. _`MRF24J40MA/B/C/D/E wireless modules`: http://www.microchip.com/pagehandler/en-us/technology/personalareanetworks/home.html
 .. _ChannelScanner: https://github.com/circuitar/Nanoshield_MRF/blob/master/examples/ChannelScanner/ChannelScanner.ino
 .. _LinkTest: https://github.com/circuitar/Nanoshield_MRF/blob/master/examples/LinkTest/LinkTest.ino
